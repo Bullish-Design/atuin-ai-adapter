@@ -1,5 +1,5 @@
 [project]
-name = "template-py"
+name = "atuin-ai-adapter"
 version = "0.1.0"
 description = "A Python project template with modern tooling."
 readme = "README.md"
@@ -82,4 +82,3 @@ ignore = []
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
-
