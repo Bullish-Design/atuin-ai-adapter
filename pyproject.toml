@@ -62,7 +62,7 @@ asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.13"
-packages = ["src/atuin_ai_adapter"]
+files = ["src/atuin_ai_adapter"]
 strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true

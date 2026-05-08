@@ -63,7 +63,7 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/health/ready")
-async def health_ready(request: Request):
+async def health_ready(request: Request) -> object:
     vllm_client: VllmClient = request.app.state.vllm_client
     if await vllm_client.health_check():
         return {"status": "ready", "upstream": "reachable"}
