@@ -1,0 +1,6 @@
+{
+  "messages": [
+    {"role": "user", "content": "hello"}
+  ],
+  "invocation_id": "test-minimal-001"
+}

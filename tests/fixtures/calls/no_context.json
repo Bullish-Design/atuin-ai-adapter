@@ -1,0 +1,7 @@
+{
+  "messages": [
+    {"role": "user", "content": "what is my current directory?"}
+  ],
+  "context": null,
+  "invocation_id": "test-no-context-001"
+}

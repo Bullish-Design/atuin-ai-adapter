@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {"role": "user", "content": "should not reach backend"}
+  ],
+  "context": {
+    "os": "linux",
+    "shell": "zsh"
+  },
+  "invocation_id": "test-auth-bad-001"
+}

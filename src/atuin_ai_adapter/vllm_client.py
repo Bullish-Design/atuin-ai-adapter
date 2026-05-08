@@ -42,7 +42,7 @@ class VllmClient:
                     choices = parsed.get("choices", [])
                     delta = choices[0].get("delta", {}) if choices else {}
                     yield delta.get("content")
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPError) as exc:
+        except httpx.HTTPError as exc:
             raise VllmError(f"Cannot reach upstream model server at {self._base_url}") from exc
 
     async def health_check(self) -> bool:

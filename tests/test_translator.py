@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from atuin_ai_adapter.protocol.atuin import AtuinChatRequest
 from atuin_ai_adapter.translator import build_openai_messages, flatten_content_blocks
+from tests.conftest import load_call
 
 PREAMBLE = "Custom preamble."
 
@@ -167,3 +168,25 @@ def test_flatten_string() -> None:
 
 def test_flatten_non_string_non_list() -> None:
     assert flatten_content_blocks(123) == "123"
+
+
+def test_fixture_simple_translates() -> None:
+    req = AtuinChatRequest.model_validate(load_call("simple"))
+    out = build_openai_messages(req, PREAMBLE)
+    assert out[0].role == "system"
+    assert out[-1].role == "user"
+
+
+def test_fixture_conversation_translates() -> None:
+    req = AtuinChatRequest.model_validate(load_call("conversation"))
+    out = build_openai_messages(req, PREAMBLE)
+    assert len(out) >= 3
+    assert [m.role for m in out[1:]] == ["user", "assistant", "user"]
+
+
+def test_fixture_with_tools_translates() -> None:
+    req = AtuinChatRequest.model_validate(load_call("with_tools"))
+    out = build_openai_messages(req, PREAMBLE)
+    combined = "\n".join(m.content for m in out)
+    assert "[Tool call:" in combined
+    assert "[Tool result" in combined or "[Tool error" in combined

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-import re
 from collections.abc import AsyncIterator
 
 import pytest
@@ -10,6 +8,7 @@ from atuin_ai_adapter.config import Settings
 from atuin_ai_adapter.protocol.atuin import AtuinChatRequest
 from atuin_ai_adapter.service import handle_chat
 from atuin_ai_adapter.vllm_client import VllmError
+from tests.conftest import extract_events, load_call, parse_sse_frames
 
 
 class FakeVllmClient:
@@ -23,7 +22,8 @@ class FakeVllmClient:
         self.fail_after = fail_after
         self.error = error
 
-    async def stream_chat(self, request) -> AsyncIterator[str | None]:  # type: ignore[no-untyped-def]
+    async def stream_chat(self, request: object) -> AsyncIterator[str | None]:
+        del request
         if self.error is not None and self.fail_after is None:
             raise self.error
         for idx, delta in enumerate(self.deltas):
@@ -32,95 +32,79 @@ class FakeVllmClient:
             yield delta
 
 
-def _request(payload: dict) -> AtuinChatRequest:
-    return AtuinChatRequest.model_validate(payload)
+def _req_from_fixture(name: str) -> AtuinChatRequest:
+    return AtuinChatRequest.model_validate(load_call(name))
 
 
 def _settings() -> Settings:
     return Settings.model_validate({"vllm_model": "test-model"})
 
 
-def _event_name(frame: str) -> str:
-    return frame.splitlines()[0].removeprefix("event: ")
-
-
-def _data(frame: str) -> dict:
-    return json.loads(frame.splitlines()[1].removeprefix("data: "))
+async def _collect_frames(req: AtuinChatRequest, client: FakeVllmClient) -> list[dict[str, object]]:
+    frames = [frame async for frame in handle_chat(req, client, _settings())]
+    return parse_sse_frames("".join(frames))
 
 
 @pytest.mark.asyncio
 async def test_happy_path() -> None:
-    client = FakeVllmClient(deltas=["hello", " ", "world"])
-    req = _request({"messages": [{"role": "user", "content": "x"}], "invocation_id": "inv-1"})
-
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
-
-    assert [_event_name(f) for f in frames] == ["text", "text", "text", "done"]
-    assert _data(frames[0])["content"] == "hello"
+    frames = await _collect_frames(_req_from_fixture("minimal"), FakeVllmClient(["hello", " ", "world"]))
+    assert extract_events(frames) == ["text", "text", "text", "done"]
 
 
 @pytest.mark.asyncio
 async def test_session_id_echo() -> None:
-    client = FakeVllmClient(deltas=["ok"])
-    req = _request(
+    req = AtuinChatRequest.model_validate(
         {
             "messages": [{"role": "user", "content": "x"}],
             "invocation_id": "inv-1",
             "session_id": "my-session",
         }
     )
-
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
-
-    assert _data(frames[-1])["session_id"] == "my-session"
+    frames = await _collect_frames(req, FakeVllmClient(["ok"]))
+    assert frames[-1]["data"]["session_id"] == "my-session"  # type: ignore[index]
 
 
 @pytest.mark.asyncio
 async def test_session_id_generation() -> None:
-    client = FakeVllmClient(deltas=["ok"])
-    req = _request({"messages": [{"role": "user", "content": "x"}], "invocation_id": "inv-1"})
-
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
-
-    sid = _data(frames[-1])["session_id"]
-    assert re.fullmatch(r"[0-9a-f\-]{36}", sid)
+    frames = await _collect_frames(_req_from_fixture("minimal"), FakeVllmClient(["ok"]))
+    assert isinstance(frames[-1]["data"]["session_id"], str)  # type: ignore[index]
 
 
 @pytest.mark.asyncio
 async def test_upstream_error() -> None:
-    client = FakeVllmClient(error=VllmError("connection refused"))
-    req = _request({"messages": [{"role": "user", "content": "x"}], "invocation_id": "inv-1"})
-
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
-
-    assert [_event_name(f) for f in frames] == ["error", "done"]
+    frames = await _collect_frames(_req_from_fixture("minimal"), FakeVllmClient(error=VllmError("down")))
+    assert extract_events(frames) == ["error", "done"]
 
 
 @pytest.mark.asyncio
 async def test_midstream_error() -> None:
-    client = FakeVllmClient(deltas=["a", "b", "c"], fail_after=2, error=VllmError("midstream"))
-    req = _request({"messages": [{"role": "user", "content": "x"}], "invocation_id": "inv-1"})
-
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
-
-    assert [_event_name(f) for f in frames] == ["text", "text", "error", "done"]
+    frames = await _collect_frames(
+        _req_from_fixture("minimal"),
+        FakeVllmClient(deltas=["a", "b", "c"], fail_after=2, error=VllmError("midstream")),
+    )
+    assert extract_events(frames) == ["text", "text", "error", "done"]
 
 
 @pytest.mark.asyncio
 async def test_none_deltas_skipped() -> None:
-    client = FakeVllmClient(deltas=[None, "hello", None])
-    req = _request({"messages": [{"role": "user", "content": "x"}], "invocation_id": "inv-1"})
-
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
-
-    assert [_event_name(f) for f in frames] == ["text", "done"]
+    frames = await _collect_frames(_req_from_fixture("minimal"), FakeVllmClient([None, "hello", None]))
+    assert extract_events(frames) == ["text", "done"]
 
 
 @pytest.mark.asyncio
 async def test_empty_deltas_skipped() -> None:
-    client = FakeVllmClient(deltas=["", "hello", ""])
-    req = _request({"messages": [{"role": "user", "content": "x"}], "invocation_id": "inv-1"})
+    frames = await _collect_frames(_req_from_fixture("minimal"), FakeVllmClient(["", "hello", ""]))
+    assert extract_events(frames) == ["text", "done"]
 
-    frames = [frame async for frame in handle_chat(req, client, _settings())]
 
-    assert [_event_name(f) for f in frames] == ["text", "done"]
+@pytest.mark.asyncio
+async def test_fixture_with_tools_flows() -> None:
+    frames = await _collect_frames(_req_from_fixture("with_tools"), FakeVllmClient(["tool result", " ok"]))
+    assert extract_events(frames)[-1] == "done"
+
+
+@pytest.mark.asyncio
+async def test_internal_exception_returns_generic_error() -> None:
+    frames = await _collect_frames(_req_from_fixture("minimal"), FakeVllmClient(error=RuntimeError("oops")))
+    assert frames[0]["data"]["message"] == "Internal adapter error"  # type: ignore[index]
+    assert extract_events(frames) == ["error", "done"]

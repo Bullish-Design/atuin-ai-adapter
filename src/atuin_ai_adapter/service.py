@@ -36,7 +36,7 @@ async def handle_chat(
                 yield text_event(delta)
 
         yield done_event(session_id)
-    except (VllmError, Exception) as exc:
+    except Exception as exc:
         logger.error("Chat handling failed invocation_id=%s error=%s", request.invocation_id, exc)
         yield error_event(str(exc) if isinstance(exc, VllmError) else "Internal adapter error")
         yield done_event(session_id)
