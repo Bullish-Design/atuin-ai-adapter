@@ -1,16 +1,16 @@
 # PROGRESS
 
 - [x] Project directory and tracking files created.
-- [ ] Step 0 complete
-- [ ] Step 1 complete
-- [ ] Step 2 complete
-- [ ] Step 3 complete
-- [ ] Step 4 complete
-- [ ] Step 5 complete
-- [ ] Step 6 complete
-- [ ] Step 7 complete
-- [ ] Step 8 complete
-- [ ] Step 9 complete
-- [ ] Step 10 complete
-- [ ] Step 11 complete
-- [ ] Step 12 complete
+- [x] Step 0 complete
+- [x] Step 1 complete
+- [x] Step 2 complete
+- [x] Step 3 complete
+- [x] Step 4 complete
+- [x] Step 5 complete
+- [x] Step 6 complete
+- [x] Step 7 complete
+- [x] Step 8 complete
+- [x] Step 9 complete
+- [x] Step 10 complete
+- [x] Step 11 complete
+- [x] Step 12 complete
