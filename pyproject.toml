@@ -1,7 +1,7 @@
 [project]
 name = "atuin-ai-adapter"
 version = "0.1.0"
-description = "A Python project template with modern tooling."
+description = "Adapter bridging Atuin AI protocol to vLLM/OpenAI-compatible backends."
 readme = "README.md"
 requires-python = ">=3.13"
 license = { text = "MIT" }
@@ -12,15 +12,24 @@ authors = [
 
 dependencies = [
   "pydantic>=2.12.5",
+  "pydantic-settings>=2.0",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "httpx>=0.28",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=7.0",
+  "pytest-asyncio>=0.24",
   "pytest-cov>=4.1",
+  "pytest-httpx>=0.35",
   "mypy>=1.10",
   "ruff>=0.5.0",
 ]
+
+[project.scripts]
+atuin-ai-adapter = "atuin_ai_adapter.app:main"
 
 #[project.urls]
 #homepage = "https://github.com/Bullish-Design/template-py"
@@ -31,8 +40,7 @@ requires = ["hatchling>=1.18"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-# Tell hatch which package to ship (your code lives in src/template_py)
-packages = ["src/template_py"]
+packages = ["src/atuin_ai_adapter"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -48,12 +56,13 @@ include = [
 # Keep the default behavior; this section is here so you can extend it later if needed.
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=embeddify --cov-report=term-missing"
+addopts = "-q --cov=atuin_ai_adapter --cov-report=term-missing"
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.13"
-packages = ["src/template_py"]
+packages = ["src/atuin_ai_adapter"]
 strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
