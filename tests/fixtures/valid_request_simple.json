@@ -1,0 +1,14 @@
+{
+  "messages": [
+    {"role": "user", "content": "how do I list files by size?"}
+  ],
+  "context": {
+    "os": "linux",
+    "shell": "zsh",
+    "pwd": "/home/user/projects"
+  },
+  "config": {
+    "capabilities": ["client_invocations"]
+  },
+  "invocation_id": "test-invocation-001"
+}

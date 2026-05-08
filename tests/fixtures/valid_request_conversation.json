@@ -1,0 +1,19 @@
+{
+  "messages": [
+    {"role": "user", "content": "how do I find large files?"},
+    {"role": "assistant", "content": "You can use `find / -size +100M` to find files larger than 100MB."},
+    {"role": "user", "content": "how about only in the current directory?"}
+  ],
+  "context": {
+    "os": "linux",
+    "shell": "bash",
+    "pwd": "/var/log",
+    "last_command": "find / -size +100M"
+  },
+  "config": {
+    "capabilities": ["client_invocations"],
+    "user_contexts": []
+  },
+  "invocation_id": "test-invocation-002",
+  "session_id": "session-abc-123"
+}

@@ -1,0 +1,41 @@
+{
+  "messages": [
+    {"role": "user", "content": "check my disk usage"},
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "text", "text": "Let me check your disk usage."},
+        {
+          "type": "tool_use",
+          "id": "tool-001",
+          "name": "execute_shell_command",
+          "input": {"command": "df -h"}
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tool-001",
+          "content": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1       100G   45G   55G  45% /",
+          "is_error": false
+        }
+      ]
+    },
+    {"role": "assistant", "content": "Your root filesystem is at 45% capacity with 55GB free."},
+    {"role": "user", "content": "thanks, what about my home directory?"}
+  ],
+  "context": {
+    "os": "linux",
+    "shell": "zsh",
+    "distro": "arch",
+    "pwd": "/home/user"
+  },
+  "config": {
+    "capabilities": ["client_invocations", "client_v1_execute_shell_command"]
+  },
+  "invocation_id": "test-invocation-003",
+  "session_id": "session-def-456"
+}
