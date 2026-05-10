@@ -3,4 +3,5 @@
 - [x] Extracted review findings into `ISSUES.md` with severity ordering.
 - [x] Completed all `Critical` checklist items.
 - [x] Completed all `High` checklist items.
-- [ ] Complete remaining `Medium` and `Low` items as requested.
+- [x] Completed all `Medium` checklist items.
+- [ ] Complete remaining `Low` items as requested.

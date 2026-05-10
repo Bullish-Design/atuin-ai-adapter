@@ -15,12 +15,12 @@ Date extracted: 2026-05-10
 
 ## Medium
 
-- [ ] Add backend streaming test for text/tool-call interleaving (text deltas arriving between `tool_calls` delta chunks).
-- [ ] Add backend streaming test for empty `tool_calls` array (`"tool_calls": []`).
-- [ ] Add negative translator tests for malformed `tool_use` blocks (missing `id` and/or `name`) to assert current fallback/default behavior.
-- [ ] Add orchestrator test for `enable_tools=True` with empty capabilities, asserting no tools are sent upstream (`tools=None`).
-- [ ] Rename shadowed builtins in `protocol.py` signature: `tool_call_event(id, input, ...)` -> e.g. `tool_id`, `tool_input`.
-- [ ] Document the single-turn tool-flow contract in orchestration docs/comments (client owns continuation loop after `tool_call`).
+- [x] Add backend streaming test for text/tool-call interleaving (text deltas arriving between `tool_calls` delta chunks).
+- [x] Add backend streaming test for empty `tool_calls` array (`"tool_calls": []`).
+- [x] Add negative translator tests for malformed `tool_use` blocks (missing `id` and/or `name`) to assert current fallback/default behavior.
+- [x] Add orchestrator test for `enable_tools=True` with empty capabilities, asserting no tools are sent upstream (`tools=None`).
+- [x] Rename shadowed builtins in `protocol.py` signature: `tool_call_event(id, input, ...)` -> e.g. `tool_id`, `tool_input`.
+- [x] Document the single-turn tool-flow contract in orchestration docs/comments (client owns continuation loop after `tool_call`).
 
 ## Low
 

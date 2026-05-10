@@ -3,20 +3,21 @@
 Date: 2026-05-10
 
 Completed in this pass:
-- Removed dead translator production path (`build_openai_messages`, `OpenAIChatMessage`) and migrated translator tests to active paths.
-- Added missing high-priority tests for translator fallback/warning behavior and prompt empty-context behavior.
-- Refactored guideline dependency filtering in `prompt.py` from index-based mapping to explicit `(dependencies, guideline)` tuples.
-- Added regression tests for backend tool-call/text interleaving and empty `tool_calls` arrays.
-- Added orchestrator test for `enable_tools=True` with empty capabilities yielding `tools=None`.
-- Added orchestrator docstring clarifying single-turn tool flow (client-managed continuation).
+- Finished remaining Medium implementation item by renaming shadowed builtin params in `tool_call_event` (`tool_id`, `tool_input`) in `protocol.py`.
+- Confirmed previously implemented Medium items and checked them off in `ISSUES.md`:
+  - backend interleaving tool-call/text streaming test
+  - backend empty `tool_calls` array test
+  - translator negative malformed `tool_use` block test
+  - orchestrator empty-capabilities with tools enabled test
+  - orchestrator single-turn tool-flow documentation
 
 Validation run:
 - `devenv shell -- uv sync --extra dev`
 - `devenv shell -- uv run ruff check src/ tests/`
 - `devenv shell -- uv run ruff format --check src/ tests/`
 - `devenv shell -- uv run mypy`
-- `devenv shell -- pytest tests/test_translator.py tests/test_prompt.py tests/test_backend.py tests/test_orchestrator.py -q`
+- `devenv shell -- pytest tests/test_translator.py tests/test_prompt.py tests/test_backend.py tests/test_orchestrator.py tests/test_protocol.py -q`
 
 Current status:
-- All Critical and High checklist items in `ISSUES.md` are checked off.
-- Medium/Low items remain open.
+- Critical, High, and Medium sections are complete in `ISSUES.md`.
+- Low items remain open.

@@ -87,11 +87,11 @@ def text_event(content: str) -> str:
     return format_sse("text", AtuinTextEvent(content=content).model_dump_json())
 
 
-def tool_call_event(id: str, name: str, input: dict[str, Any]) -> str:
+def tool_call_event(tool_id: str, name: str, tool_input: dict[str, Any]) -> str:
     """Format an Atuin 'tool_call' SSE event."""
     return format_sse(
         "tool_call",
-        AtuinToolCallEvent(id=id, name=name, input=input).model_dump_json(),
+        AtuinToolCallEvent(id=tool_id, name=name, input=tool_input).model_dump_json(),
     )
 
 
