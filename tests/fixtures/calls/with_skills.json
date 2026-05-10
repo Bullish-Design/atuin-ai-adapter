@@ -1,0 +1,19 @@
+{
+  "messages": [
+    {"role": "user", "content": "deploy the app"}
+  ],
+  "context": {
+    "os": "linux",
+    "shell": "bash",
+    "pwd": "/home/user/myapp"
+  },
+  "config": {
+    "capabilities": ["client_invocations", "client_v1_load_skill", "client_v1_execute_shell_command"],
+    "skills": [
+      {"name": "deploy", "description": "Deploy the application to production using Docker"},
+      {"name": "release", "description": "Create a release with changelog and version bump"}
+    ],
+    "user_contexts": ["Always use Docker Compose for deployments"]
+  },
+  "invocation_id": "test-invocation-skill-001"
+}

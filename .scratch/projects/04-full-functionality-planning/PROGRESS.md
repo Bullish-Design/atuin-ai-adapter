@@ -12,7 +12,7 @@
 - [x] Step 2.1 Create tools.py
 - [x] Step 2.2 Add tool-call accumulation to backend.py
 - [x] Step 2.3 Extend translator.py for tool block translation
-- [ ] Step 2.4 Create new fixture files
+- [x] Step 2.4 Create new fixture files
 - [ ] Step 2.5 Wire tool infrastructure into orchestrator.py
 - [ ] Step 2.6 Create prompt.py
 - [ ] Step 2.7 Update orchestrator tests for tool call flow

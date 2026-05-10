@@ -1,0 +1,38 @@
+{
+  "messages": [
+    {"role": "user", "content": "read my config file"},
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "text", "text": "Let me read that file."},
+        {
+          "type": "tool_use",
+          "id": "call_001",
+          "name": "read_file",
+          "input": {"file_path": "/etc/hosts"}
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "call_001",
+          "content": "127.0.0.1 localhost\n::1 localhost",
+          "is_error": false
+        }
+      ]
+    }
+  ],
+  "context": {
+    "os": "linux",
+    "shell": "zsh",
+    "pwd": "/home/user"
+  },
+  "config": {
+    "capabilities": ["client_invocations", "client_v1_read_file"]
+  },
+  "invocation_id": "test-invocation-cont-001",
+  "session_id": "session-cont-001"
+}
