@@ -8,10 +8,10 @@ import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from atuin_ai_adapter.backend import BackendClient
 from atuin_ai_adapter.config import Settings, get_settings
-from atuin_ai_adapter.protocol.atuin import AtuinChatRequest
-from atuin_ai_adapter.service import handle_chat
-from atuin_ai_adapter.vllm_client import VllmClient
+from atuin_ai_adapter.orchestrator import handle_chat
+from atuin_ai_adapter.protocol import AtuinChatRequest
 
 
 @asynccontextmanager
@@ -21,13 +21,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         level=getattr(logging, settings.log_level.upper(), logging.INFO),
         format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
     )
-    vllm_client = VllmClient(base_url=settings.vllm_base_url, timeout=settings.vllm_timeout)
+    backend = BackendClient(
+        base_url=settings.vllm_base_url,
+        timeout=settings.vllm_timeout,
+        api_key=settings.vllm_api_key,
+    )
     app.state.settings = settings
-    app.state.vllm_client = vllm_client
+    app.state.backend = backend
     try:
         yield
     finally:
-        await vllm_client.close()
+        await backend.close()
 
 
 app = FastAPI(title="Atuin AI Adapter", lifespan=lifespan)
@@ -49,10 +53,10 @@ async def chat(
     _: None = Depends(verify_token),
 ) -> StreamingResponse:
     settings: Settings = request.app.state.settings
-    vllm_client: VllmClient = request.app.state.vllm_client
+    backend: BackendClient = request.app.state.backend
     logging.getLogger(__name__).info("request invocation_id=%s", chat_request.invocation_id)
     return StreamingResponse(
-        handle_chat(chat_request, vllm_client, settings),
+        handle_chat(chat_request, backend, settings),
         media_type="text/event-stream",
     )
 
@@ -64,8 +68,8 @@ async def health() -> dict[str, str]:
 
 @app.get("/health/ready")
 async def health_ready(request: Request) -> object:
-    vllm_client: VllmClient = request.app.state.vllm_client
-    if await vllm_client.health_check():
+    backend: BackendClient = request.app.state.backend
+    if await backend.health_check():
         return {"status": "ready", "upstream": "reachable"}
     return JSONResponse(
         {"status": "not_ready", "upstream": "unreachable"},
