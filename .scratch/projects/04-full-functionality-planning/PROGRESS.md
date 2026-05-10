@@ -13,11 +13,11 @@
 - [x] Step 2.2 Add tool-call accumulation to backend.py
 - [x] Step 2.3 Extend translator.py for tool block translation
 - [x] Step 2.4 Create new fixture files
-- [ ] Step 2.5 Wire tool infrastructure into orchestrator.py
+- [x] Step 2.5 Wire tool infrastructure into orchestrator.py
 - [x] Step 2.6 Create prompt.py
-- [ ] Step 2.7 Update orchestrator tests for tool call flow
-- [ ] Step 2.8 Update SSE event tests in test_protocol.py
-- [ ] Step 2.9 Validation
+- [x] Step 2.7 Update orchestrator tests for tool call flow
+- [x] Step 2.8 Update SSE event tests in test_protocol.py
+- [x] Step 2.9 Validation
 - [ ] Step 3.1 Integration tests with FastAPI TestClient
 - [ ] Step 3.2 Update dummy server for E2E tests
 - [ ] Step 3.3 Clean up legacy build_openai_messages

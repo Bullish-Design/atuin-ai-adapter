@@ -4,10 +4,16 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from atuin_ai_adapter.backend import BackendConnectionError, BackendDone, BackendError, BackendTextDelta
+from atuin_ai_adapter.backend import (
+    BackendConnectionError,
+    BackendDone,
+    BackendError,
+    BackendTextDelta,
+    BackendToolCall,
+)
 from atuin_ai_adapter.config import Settings
 from atuin_ai_adapter.orchestrator import handle_chat
-from atuin_ai_adapter.protocol import AtuinChatRequest
+from atuin_ai_adapter.protocol import AtuinChatRequest, AtuinConfig
 from tests.conftest import extract_events, load_call, parse_sse_frames
 
 
@@ -51,7 +57,7 @@ async def test_happy_path() -> None:
         _req_from_fixture("minimal"),
         FakeBackendClient([BackendTextDelta("hello"), BackendTextDelta(" "), BackendTextDelta("world"), BackendDone()]),
     )
-    assert extract_events(frames) == ["text", "text", "text", "done"]
+    assert extract_events(frames) == ["status", "text", "text", "text", "done"]
 
 
 @pytest.mark.asyncio
@@ -82,7 +88,7 @@ async def test_upstream_error() -> None:
         _req_from_fixture("minimal"),
         FakeBackendClient([BackendError("down")]),
     )
-    assert extract_events(frames) == ["error", "done"]
+    assert extract_events(frames) == ["status", "error", "done"]
 
 
 @pytest.mark.asyncio
@@ -95,7 +101,7 @@ async def test_midstream_error() -> None:
             error=BackendConnectionError("midstream"),
         ),
     )
-    assert extract_events(frames) == ["text", "text", "error", "done"]
+    assert extract_events(frames) == ["status", "text", "text", "error", "done"]
 
 
 @pytest.mark.asyncio
@@ -113,5 +119,51 @@ async def test_internal_exception_returns_generic_error() -> None:
         _req_from_fixture("minimal"),
         FakeBackendClient(error=RuntimeError("oops")),
     )
-    assert frames[0]["data"]["message"] == "Internal adapter error"  # type: ignore[index]
-    assert extract_events(frames) == ["error", "done"]
+    assert frames[1]["data"]["message"] == "Internal adapter error"  # type: ignore[index]
+    assert extract_events(frames) == ["status", "error", "done"]
+
+
+@pytest.mark.asyncio
+async def test_tool_call_emitted() -> None:
+    request = AtuinChatRequest(
+        messages=[{"role": "user", "content": "list files"}],
+        invocation_id="test-inv-tool-1",
+        config=AtuinConfig(capabilities=["client_invocations"]),
+    )
+    frames = await _collect_frames(
+        request,
+        FakeBackendClient(
+            [
+                BackendTextDelta("Here's a command:"),
+                BackendToolCall(id="call_123", name="suggest_command", arguments={"command": "ls -la"}),
+                BackendDone(),
+            ]
+        ),
+    )
+    events = extract_events(frames)
+    assert "status" in events
+    assert "tool_call" in events
+
+
+@pytest.mark.asyncio
+async def test_enable_tools_false_no_tools() -> None:
+    request = AtuinChatRequest(
+        messages=[{"role": "user", "content": "hello"}],
+        invocation_id="test-inv-notool",
+        config=AtuinConfig(capabilities=["client_invocations"]),
+    )
+
+    class CaptureBackend(FakeBackendClient):
+        def __init__(self) -> None:
+            super().__init__([BackendTextDelta("hello"), BackendDone()])
+            self.kwargs: dict[str, object] = {}
+
+        async def stream_chat(self, **kwargs: object) -> AsyncIterator[object]:
+            self.kwargs.update(kwargs)
+            async for e in super().stream_chat(**kwargs):
+                yield e
+
+    backend = CaptureBackend()
+    settings = Settings.model_validate({"vllm_model": "test-model", "enable_tools": False})
+    _ = [frame async for frame in handle_chat(request, backend, settings)]
+    assert backend.kwargs.get("tools") is None

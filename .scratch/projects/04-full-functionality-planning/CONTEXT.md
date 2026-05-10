@@ -15,3 +15,4 @@ Completed Step 2.2: backend tool-call accumulation implemented with new stream f
 Completed Step 2.3: added structured translate_messages() tool-block translation and translator tests.
 Completed Step 2.4: added continuation.json and with_skills.json call fixtures.
 Completed Step 2.6: added prompt.py and tests/test_prompt.py for composed system prompts.
+Completed Steps 2.5, 2.7, 2.8, 2.9: orchestrator wired to tools/prompt/translate_messages with status+tool_call events; protocol/orchestrator tests updated; full suite + ruff checks pass at 96% coverage.

@@ -9,6 +9,7 @@ from atuin_ai_adapter.protocol import (
     AtuinChatRequest,
     AtuinDoneEvent,
     AtuinErrorEvent,
+    AtuinSkillSummary,
     AtuinStatusEvent,
     AtuinTextEvent,
     AtuinToolCallEvent,
@@ -115,3 +116,9 @@ def test_tool_result_event_model() -> None:
 def test_status_event_model() -> None:
     event = AtuinStatusEvent(state="Processing")
     assert event.model_dump() == {"state": "Processing"}
+
+
+def test_skill_summary_model() -> None:
+    skill = AtuinSkillSummary(name="deploy", description="Deploy to prod")
+    assert skill.name == "deploy"
+    assert skill.description == "Deploy to prod"
