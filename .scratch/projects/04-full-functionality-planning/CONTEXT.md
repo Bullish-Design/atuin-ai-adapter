@@ -7,3 +7,4 @@ Next action: implement Phase 1 step-by-step and commit/push after each step.
 Completed Step 1.1: created src/atuin_ai_adapter/protocol.py with unified models and SSE builders.
 Completed Step 1.2: added src/atuin_ai_adapter/backend.py with BackendEvent types and text-only stream parsing.
 Completed Step 1.3: added src/atuin_ai_adapter/orchestrator.py with handle_chat over BackendEvent stream.
+Completed Step 1.4: updated Settings with vllm_api_key and enable_tools.

@@ -22,9 +22,11 @@ class Settings(BaseSettings):
     vllm_base_url: str = "http://127.0.0.1:8000"
     vllm_model: str
     vllm_timeout: float = 120.0
+    vllm_api_key: str | None = None
     generation_temperature: float = 0.7
     generation_max_tokens: int = 2048
     generation_top_p: float = 0.95
+    enable_tools: bool = True
     system_prompt_template: str = DEFAULT_SYSTEM_PROMPT_TEMPLATE
     log_level: str = "INFO"
 
