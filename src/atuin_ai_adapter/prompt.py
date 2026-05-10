@@ -59,23 +59,28 @@ def _build_tool_section(tools: list[ToolDefinition]) -> str | None:
 
     tool_lines = [f"- {tool.name}: {tool.description}" for tool in tools]
 
-    guidelines = [
-        "- When the user asks for a command, use suggest_command rather than just writing it in text.",
-        "- Use read_file before edit_file to understand current file contents.",
-        "- Prefer suggest_command over execute_shell_command when the user should review first.",
-        '- For dangerous operations, set danger to "high" and include a warning.',
-    ]
-
     tool_names = {t.name for t in tools}
     filtered_guidelines = []
-    guideline_tool_deps = {
-        0: {"suggest_command"},
-        1: {"read_file", "edit_file"},
-        2: {"suggest_command", "execute_shell_command"},
-        3: {"suggest_command"},
-    }
-    for i, guideline in enumerate(guidelines):
-        if guideline_tool_deps.get(i, set()) <= tool_names:
+    guidelines: list[tuple[set[str], str]] = [
+        (
+            {"suggest_command"},
+            "- When the user asks for a command, use suggest_command rather than just writing it in text.",
+        ),
+        (
+            {"read_file", "edit_file"},
+            "- Use read_file before edit_file to understand current file contents.",
+        ),
+        (
+            {"suggest_command", "execute_shell_command"},
+            "- Prefer suggest_command over execute_shell_command when the user should review first.",
+        ),
+        (
+            {"suggest_command"},
+            '- For dangerous operations, set danger to "high" and include a warning.',
+        ),
+    ]
+    for deps, guideline in guidelines:
+        if deps <= tool_names:
             filtered_guidelines.append(guideline)
 
     section = "## Available tools\nYou have the following tools available. Use them when appropriate:\n"

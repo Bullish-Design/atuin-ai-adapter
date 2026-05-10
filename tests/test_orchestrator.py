@@ -167,3 +167,27 @@ async def test_enable_tools_false_no_tools() -> None:
     settings = Settings.model_validate({"vllm_model": "test-model", "enable_tools": False})
     _ = [frame async for frame in handle_chat(request, backend, settings)]
     assert backend.kwargs.get("tools") is None
+
+
+@pytest.mark.asyncio
+async def test_enable_tools_true_with_empty_capabilities_sends_no_tools() -> None:
+    request = AtuinChatRequest(
+        messages=[{"role": "user", "content": "hello"}],
+        invocation_id="test-inv-empty-caps",
+        config=AtuinConfig(capabilities=[]),
+    )
+
+    class CaptureBackend(FakeBackendClient):
+        def __init__(self) -> None:
+            super().__init__([BackendTextDelta("hello"), BackendDone()])
+            self.kwargs: dict[str, object] = {}
+
+        async def stream_chat(self, **kwargs: object) -> AsyncIterator[object]:
+            self.kwargs.update(kwargs)
+            async for e in super().stream_chat(**kwargs):
+                yield e
+
+    backend = CaptureBackend()
+    settings = Settings.model_validate({"vllm_model": "test-model", "enable_tools": True})
+    _ = [frame async for frame in handle_chat(request, backend, settings)]
+    assert backend.kwargs.get("tools") is None

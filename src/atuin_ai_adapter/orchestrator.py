@@ -34,6 +34,12 @@ async def handle_chat(
     backend: BackendClient,
     settings: Settings,
 ) -> AsyncIterator[str]:
+    """Handle a single backend turn and stream SSE frames to the client.
+
+    Tool-use continuation is intentionally client-managed: when a `tool_call`
+    event is emitted, the client executes it and later sends a follow-up request
+    that includes tool results in `request.messages`.
+    """
     session_id = request.session_id or str(uuid.uuid4())
 
     try:

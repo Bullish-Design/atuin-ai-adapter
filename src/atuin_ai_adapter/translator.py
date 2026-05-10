@@ -2,18 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
 from typing import Any
 
-from atuin_ai_adapter.protocol import AtuinChatRequest
-
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class OpenAIChatMessage:
-    role: str
-    content: str
 
 
 def flatten_content_blocks(content: str | list[dict[str, Any]] | Any) -> str:
@@ -44,44 +35,6 @@ def flatten_content_blocks(content: str | list[dict[str, Any]] | Any) -> str:
 
     logger.warning("Unexpected content type: %s", type(content).__name__)
     return str(content)
-
-
-def build_openai_messages(request: AtuinChatRequest, system_prompt_template: str) -> list[OpenAIChatMessage]:
-    body_lines: list[str] = []
-
-    if request.context is not None:
-        env_lines: list[str] = []
-        field_map = [
-            ("OS", request.context.os),
-            ("Shell", request.context.shell),
-            ("Distribution", request.context.distro),
-            ("Working directory", request.context.pwd),
-            ("Last command", request.context.last_command),
-        ]
-        for label, value in field_map:
-            if value:
-                env_lines.append(f"- {label}: {value}")
-        if env_lines:
-            body_lines.append("Environment:")
-            body_lines.extend(env_lines)
-
-    if request.config is not None and request.config.user_contexts:
-        if body_lines:
-            body_lines.append("")
-        body_lines.append("User context:")
-        body_lines.extend(request.config.user_contexts)
-
-    system_content = system_prompt_template
-    if body_lines:
-        system_content = f"{system_prompt_template}\n\n" + "\n".join(body_lines)
-
-    translated: list[OpenAIChatMessage] = [OpenAIChatMessage(role="system", content=system_content)]
-    for message in request.messages:
-        role = str(message.get("role", "user"))
-        content = flatten_content_blocks(message.get("content", ""))
-        translated.append(OpenAIChatMessage(role=role, content=content))
-
-    return translated
 
 
 def translate_messages(

@@ -19,6 +19,11 @@ def test_with_context() -> None:
     assert "- OS: linux" in result
 
 
+def test_with_empty_context_omits_environment_section() -> None:
+    result = build_system_prompt(context=AtuinContext(), config=None, tools=[], base_prompt=BASE_PROMPT)
+    assert "## Environment" not in result
+
+
 def test_with_tools() -> None:
     tools = build_tool_registry(["client_invocations"])
     result = build_system_prompt(context=None, config=None, tools=tools, base_prompt=BASE_PROMPT)

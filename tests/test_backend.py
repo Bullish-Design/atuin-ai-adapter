@@ -156,6 +156,53 @@ async def test_multiple_tool_call_accumulation(httpx_mock) -> None:  # type: ign
 
 
 @pytest.mark.asyncio
+async def test_tool_call_accumulation_with_text_interleaving(httpx_mock) -> None:  # type: ignore[no-untyped-def]
+    first_delta = (
+        '{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_123","function":'
+        '{"name":"suggest_command","arguments":"{\\"command\\":\\"ls"}}]}}]}'
+    )
+    second_delta = '{"choices":[{"delta":{"content":"thinking..."}}]}'
+    third_delta = '{"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":" -la\\"}"}}]}}]}'
+    stream = f"data: {first_delta}\n\ndata: {second_delta}\n\ndata: {third_delta}\n\ndata: [DONE]\n\n"
+    httpx_mock.add_response(
+        method="POST",
+        url="http://test/v1/chat/completions",
+        text=stream,
+        headers={"content-type": "text/event-stream"},
+    )
+    client = BackendClient(base_url="http://test", timeout=30)
+    events = [e async for e in client.stream_chat(messages=[{"role": "user", "content": "x"}], model="m")]
+    text_events = [e for e in events if isinstance(e, BackendTextDelta)]
+    tool_events = [e for e in events if isinstance(e, BackendToolCall)]
+    assert [event.content for event in text_events] == ["thinking..."]
+    assert len(tool_events) == 1
+    assert tool_events[0].id == "call_123"
+    assert tool_events[0].name == "suggest_command"
+    assert tool_events[0].arguments == {"command": "ls -la"}
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_empty_tool_calls_array_is_ignored(httpx_mock) -> None:  # type: ignore[no-untyped-def]
+    stream = (
+        'data: {"choices":[{"delta":{"tool_calls":[]}}]}\n\n'
+        'data: {"choices":[{"delta":{"content":"ok"}}]}\n\n'
+        "data: [DONE]\n\n"
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="http://test/v1/chat/completions",
+        text=stream,
+        headers={"content-type": "text/event-stream"},
+    )
+    client = BackendClient(base_url="http://test", timeout=30)
+    events = [e async for e in client.stream_chat(messages=[{"role": "user", "content": "x"}], model="m")]
+    assert [e.content for e in events if isinstance(e, BackendTextDelta)] == ["ok"]
+    assert not any(isinstance(e, BackendToolCall) for e in events)
+    await client.close()
+
+
+@pytest.mark.asyncio
 async def test_malformed_tool_call_arguments(httpx_mock) -> None:  # type: ignore[no-untyped-def]
     httpx_mock.add_response(
         method="POST",
