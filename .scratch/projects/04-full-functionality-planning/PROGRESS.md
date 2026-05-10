@@ -9,7 +9,7 @@
 - [x] Step 1.7 Delete old modules
 - [x] Step 1.8 Update all tests
 - [x] Step 1.9 Validation
-- [ ] Step 2.1 Create tools.py
+- [x] Step 2.1 Create tools.py
 - [ ] Step 2.2 Add tool-call accumulation to backend.py
 - [ ] Step 2.3 Extend translator.py for tool block translation
 - [ ] Step 2.4 Create new fixture files
