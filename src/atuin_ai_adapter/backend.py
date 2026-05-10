@@ -39,6 +39,13 @@ class BackendError:
 BackendEvent = BackendTextDelta | BackendToolCall | BackendDone | BackendError
 
 
+@dataclass
+class _ToolCallAccumulator:
+    id: str = ""
+    name: str = ""
+    arguments: str = ""
+
+
 # Exceptions
 
 
@@ -105,13 +112,14 @@ class BackendClient:
 
     async def _parse_stream(self, response: httpx.Response) -> AsyncIterator[BackendEvent]:
         """Parse an OpenAI-compatible SSE stream, yielding BackendEvents."""
+        accumulators: dict[int, _ToolCallAccumulator] = {}
+
         async for line in response.aiter_lines():
             line = line.strip()
             if not line:
                 continue
             if line == "data: [DONE]":
-                yield BackendDone()
-                return
+                break
             if not line.startswith("data: "):
                 continue
 
@@ -127,11 +135,42 @@ class BackendClient:
             if not choices:
                 continue
 
-            delta = choices[0].get("delta", {})
+            choice = choices[0]
+            delta = choice.get("delta", {})
 
             content = delta.get("content")
             if content:
                 yield BackendTextDelta(content=content)
+
+            tool_calls = delta.get("tool_calls")
+            if tool_calls:
+                for tc_delta in tool_calls:
+                    index = tc_delta.get("index", 0)
+                    if index not in accumulators:
+                        accumulators[index] = _ToolCallAccumulator()
+
+                    acc = accumulators[index]
+                    if "id" in tc_delta:
+                        acc.id = tc_delta["id"]
+                    func = tc_delta.get("function", {})
+                    if "name" in func:
+                        acc.name = func["name"]
+                    if "arguments" in func:
+                        acc.arguments += func["arguments"]
+
+        for index in sorted(accumulators):
+            acc = accumulators[index]
+            try:
+                arguments = json.loads(acc.arguments) if acc.arguments else {}
+            except json.JSONDecodeError:
+                yield BackendError(message=f"Malformed tool call arguments for {acc.name}")
+                yield BackendDone()
+                return
+            yield BackendToolCall(
+                id=acc.id or f"call_{index}",
+                name=acc.name,
+                arguments=arguments,
+            )
 
         yield BackendDone()
 

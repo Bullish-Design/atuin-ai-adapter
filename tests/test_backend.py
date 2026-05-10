@@ -9,6 +9,7 @@ from atuin_ai_adapter.backend import (
     BackendDone,
     BackendError,
     BackendTextDelta,
+    BackendToolCall,
 )
 from tests.conftest import load_stream
 
@@ -114,4 +115,57 @@ async def test_health_check_failure(httpx_mock) -> None:  # type: ignore[no-unty
     httpx_mock.add_exception(httpx.ConnectError("down"))
     client = BackendClient(base_url="http://test", timeout=30)
     assert await client.health_check() is False
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_single_tool_call_accumulation(httpx_mock) -> None:  # type: ignore[no-untyped-def]
+    httpx_mock.add_response(
+        method="POST",
+        url="http://test/v1/chat/completions",
+        text=load_stream("with_tool_call"),
+        headers={"content-type": "text/event-stream"},
+    )
+    client = BackendClient(base_url="http://test", timeout=30)
+    events = [e async for e in client.stream_chat(messages=[{"role": "user", "content": "x"}], model="m")]
+    tool_events = [e for e in events if isinstance(e, BackendToolCall)]
+    assert len(tool_events) == 1
+    assert tool_events[0].id == "call_abc123"
+    assert tool_events[0].name == "suggest_command"
+    assert tool_events[0].arguments == {"command": "ls -la"}
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_multiple_tool_call_accumulation(httpx_mock) -> None:  # type: ignore[no-untyped-def]
+    httpx_mock.add_response(
+        method="POST",
+        url="http://test/v1/chat/completions",
+        text=load_stream("with_multiple_tool_calls"),
+        headers={"content-type": "text/event-stream"},
+    )
+    client = BackendClient(base_url="http://test", timeout=30)
+    events = [e async for e in client.stream_chat(messages=[{"role": "user", "content": "x"}], model="m")]
+    tool_events = [e for e in events if isinstance(e, BackendToolCall)]
+    assert len(tool_events) == 2
+    assert tool_events[0].id == "call_001"
+    assert tool_events[0].arguments == {"file_path": "foo.rs"}
+    assert tool_events[1].id == "call_002"
+    assert tool_events[1].arguments == {"file_path": "bar.rs"}
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_malformed_tool_call_arguments(httpx_mock) -> None:  # type: ignore[no-untyped-def]
+    httpx_mock.add_response(
+        method="POST",
+        url="http://test/v1/chat/completions",
+        text=load_stream("malformed_tool_args"),
+        headers={"content-type": "text/event-stream"},
+    )
+    client = BackendClient(base_url="http://test", timeout=30)
+    events = [e async for e in client.stream_chat(messages=[{"role": "user", "content": "x"}], model="m")]
+    error_events = [e for e in events if isinstance(e, BackendError)]
+    assert len(error_events) == 1
+    assert "malformed" in error_events[0].message.lower()
     await client.close()

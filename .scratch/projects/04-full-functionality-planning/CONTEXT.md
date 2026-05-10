@@ -11,3 +11,4 @@ Completed Step 1.4: updated Settings with vllm_api_key and enable_tools.
 Completed Step 1.5: migrated app.py imports/wiring to BackendClient + orchestrator + unified protocol module.
 Completed Steps 1.6-1.9: translator import migration, removed legacy modules, migrated tests to new architecture, and passed Phase 1 validation (pytest, ruff check, ruff format --check). Note: project does not define `uv run lint`; used ruff commands directly.
 Completed Step 2.1: added tools.py registry and tests/test_tools.py; targeted tests pass.
+Completed Step 2.2: backend tool-call accumulation implemented with new stream fixtures and backend tests.
