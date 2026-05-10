@@ -14,3 +14,4 @@ Completed Step 2.1: added tools.py registry and tests/test_tools.py; targeted te
 Completed Step 2.2: backend tool-call accumulation implemented with new stream fixtures and backend tests.
 Completed Step 2.3: added structured translate_messages() tool-block translation and translator tests.
 Completed Step 2.4: added continuation.json and with_skills.json call fixtures.
+Completed Step 2.6: added prompt.py and tests/test_prompt.py for composed system prompts.
