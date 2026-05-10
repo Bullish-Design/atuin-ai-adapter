@@ -18,15 +18,41 @@ async def models() -> dict[str, object]:
 
 
 @app.post("/v1/chat/completions")
-async def chat_completions() -> StreamingResponse:
+async def chat_completions(request: dict[str, object]) -> StreamingResponse:
     global REQUEST_COUNT
     REQUEST_COUNT += 1
 
     async def gen():
-        chunks = [
-            {"choices": [{"delta": {"content": "DUMMY_E2E_TOKEN"}}]},
-            {"choices": [{"delta": {"content": "_OK"}}]},
-        ]
+        if request.get("tools"):
+            chunks = [
+                {"choices": [{"delta": {"content": "DUMMY_E2E_TOKEN"}}]},
+                {
+                    "choices": [
+                        {
+                            "delta": {
+                                "tool_calls": [
+                                    {
+                                        "index": 0,
+                                        "id": "call_e2e",
+                                        "type": "function",
+                                        "function": {"name": "suggest_command", "arguments": ""},
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "choices": [
+                        {"delta": {"tool_calls": [{"index": 0, "function": {"arguments": '{"command":"echo hi"}'}}]}}
+                    ]
+                },
+            ]
+        else:
+            chunks = [
+                {"choices": [{"delta": {"content": "DUMMY_E2E_TOKEN"}}]},
+                {"choices": [{"delta": {"content": "_OK"}}]},
+            ]
         for chunk in chunks:
             yield f"data: {json.dumps(chunk)}\n\n"
             await asyncio.sleep(0.05)

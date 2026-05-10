@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import httpx
 
-from tests.conftest import extract_events, fire_call, load_call, load_stream
+from tests.conftest import extract_events, fire_call, load_call, load_stream, parse_sse_frames
 
 
 def test_happy_path_end_to_end(adapter_client, httpx_mock) -> None:  # type: ignore[no-untyped-def]
@@ -186,3 +186,60 @@ def test_missing_invocation_id_field_returns_422(adapter_client) -> None:  # typ
         json={"messages": [{"role": "user", "content": "hello"}]},
     )
     assert response.status_code == 422
+
+
+class TestToolCallIntegration:
+    def test_tool_call_sse_event_emitted(self, adapter_client, httpx_mock) -> None:  # type: ignore[no-untyped-def]
+        stream_body = load_stream("with_tool_call")
+        httpx_mock.add_response(
+            url="http://test-upstream/v1/chat/completions",
+            content=stream_body.encode(),
+            headers={"content-type": "text/event-stream"},
+        )
+        call_data = load_call("simple")
+        response = adapter_client.post(
+            "/api/cli/chat",
+            headers={"Authorization": "Bearer test-token", "Accept": "text/event-stream"},
+            json=call_data,
+        )
+        assert response.status_code == 200
+        frames = parse_sse_frames(response.text)
+        event_types = extract_events(frames)
+        assert "status" in event_types
+        assert "text" in event_types
+        assert "tool_call" in event_types
+        assert "done" in event_types
+
+    def test_continuation_request(self, adapter_client, httpx_mock) -> None:  # type: ignore[no-untyped-def]
+        stream_body = load_stream("happy_simple")
+        httpx_mock.add_response(
+            url="http://test-upstream/v1/chat/completions",
+            content=stream_body.encode(),
+            headers={"content-type": "text/event-stream"},
+        )
+        call_data = load_call("continuation")
+        response = adapter_client.post(
+            "/api/cli/chat",
+            headers={"Authorization": "Bearer test-token", "Accept": "text/event-stream"},
+            json=call_data,
+        )
+        assert response.status_code == 200
+        frames = parse_sse_frames(response.text)
+        assert any(f["event"] == "done" for f in frames)
+
+    def test_skills_in_request(self, adapter_client, httpx_mock) -> None:  # type: ignore[no-untyped-def]
+        stream_body = load_stream("happy_simple")
+        httpx_mock.add_response(
+            url="http://test-upstream/v1/chat/completions",
+            content=stream_body.encode(),
+            headers={"content-type": "text/event-stream"},
+        )
+        call_data = load_call("with_skills")
+        response = adapter_client.post(
+            "/api/cli/chat",
+            headers={"Authorization": "Bearer test-token", "Accept": "text/event-stream"},
+            json=call_data,
+        )
+        assert response.status_code == 200
+        frames = parse_sse_frames(response.text)
+        assert any(f["event"] == "done" for f in frames)

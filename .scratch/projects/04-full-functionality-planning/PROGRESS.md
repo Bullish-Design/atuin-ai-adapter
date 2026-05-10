@@ -18,7 +18,7 @@
 - [x] Step 2.7 Update orchestrator tests for tool call flow
 - [x] Step 2.8 Update SSE event tests in test_protocol.py
 - [x] Step 2.9 Validation
-- [ ] Step 3.1 Integration tests with FastAPI TestClient
-- [ ] Step 3.2 Update dummy server for E2E tests
-- [ ] Step 3.3 Clean up legacy build_openai_messages
-- [ ] Step 3.4 Final validation
+- [x] Step 3.1 Integration tests with FastAPI TestClient
+- [x] Step 3.2 Update dummy server for E2E tests
+- [x] Step 3.3 Clean up legacy build_openai_messages
+- [x] Step 3.4 Final validation
