@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
+
 from atuin_ai_adapter.protocol import AtuinChatRequest
-from atuin_ai_adapter.translator import build_openai_messages, flatten_content_blocks
+from atuin_ai_adapter.translator import build_openai_messages, flatten_content_blocks, translate_messages
 from tests.conftest import load_call
 
 PREAMBLE = "Custom preamble."
@@ -190,3 +192,49 @@ def test_fixture_with_tools_translates() -> None:
     combined = "\n".join(m.content for m in out)
     assert "[Tool call:" in combined
     assert "[Tool result" in combined or "[Tool error" in combined
+
+
+def test_translate_simple_text_passthrough() -> None:
+    messages = [{"role": "user", "content": "hello"}, {"role": "assistant", "content": "hi there"}]
+    assert translate_messages(messages, flatten_tools=False) == messages
+
+
+def test_translate_assistant_tool_use() -> None:
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "Let me read that."},
+                {"type": "tool_use", "id": "tc_001", "name": "read_file", "input": {"file_path": "foo.rs"}},
+            ],
+        }
+    ]
+    result = translate_messages(messages, flatten_tools=False)
+    assert result[0]["role"] == "assistant"
+    assert result[0]["content"] == "Let me read that."
+    assert json.loads(result[0]["tool_calls"][0]["function"]["arguments"]) == {"file_path": "foo.rs"}  # type: ignore[index]
+
+
+def test_translate_user_tool_result() -> None:
+    messages = [
+        {
+            "role": "user",
+            "content": [{"type": "tool_result", "tool_use_id": "tc_001", "content": "file contents..."}],
+        }
+    ]
+    result = translate_messages(messages, flatten_tools=False)
+    assert result == [{"role": "tool", "tool_call_id": "tc_001", "content": "file contents..."}]
+
+
+def test_translate_flatten_tools_true() -> None:
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "Let me check."},
+                {"type": "tool_use", "id": "tc_001", "name": "read_file", "input": {"file_path": "x.rs"}},
+            ],
+        }
+    ]
+    result = translate_messages(messages, flatten_tools=True)
+    assert "[Tool call: read_file" in result[0]["content"]
