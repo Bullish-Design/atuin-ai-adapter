@@ -4,7 +4,6 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-
 # Atuin request models
 
 

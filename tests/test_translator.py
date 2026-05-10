@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from atuin_ai_adapter.protocol.atuin import AtuinChatRequest
+from atuin_ai_adapter.protocol import AtuinChatRequest
 from atuin_ai_adapter.translator import build_openai_messages, flatten_content_blocks
 from tests.conftest import load_call
 

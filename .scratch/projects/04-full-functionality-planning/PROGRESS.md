@@ -5,4 +5,20 @@
 - [x] Step 1.3 Create orchestrator.py
 - [x] Step 1.4 Update config.py
 - [x] Step 1.5 Update app.py
-- [ ] Remaining steps in V2_1_REFACTORING_GUIDE.md
+- [x] Step 1.6 Update translator.py imports
+- [x] Step 1.7 Delete old modules
+- [x] Step 1.8 Update all tests
+- [x] Step 1.9 Validation
+- [ ] Step 2.1 Create tools.py
+- [ ] Step 2.2 Add tool-call accumulation to backend.py
+- [ ] Step 2.3 Extend translator.py for tool block translation
+- [ ] Step 2.4 Create new fixture files
+- [ ] Step 2.5 Wire tool infrastructure into orchestrator.py
+- [ ] Step 2.6 Create prompt.py
+- [ ] Step 2.7 Update orchestrator tests for tool call flow
+- [ ] Step 2.8 Update SSE event tests in test_protocol.py
+- [ ] Step 2.9 Validation
+- [ ] Step 3.1 Integration tests with FastAPI TestClient
+- [ ] Step 3.2 Update dummy server for E2E tests
+- [ ] Step 3.3 Clean up legacy build_openai_messages
+- [ ] Step 3.4 Final validation

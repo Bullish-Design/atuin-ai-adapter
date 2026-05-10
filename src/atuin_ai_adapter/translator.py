@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from typing import Any
 
-from atuin_ai_adapter.protocol.atuin import AtuinChatRequest
-from atuin_ai_adapter.protocol.openai import OpenAIChatMessage
+from atuin_ai_adapter.protocol import AtuinChatRequest
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class OpenAIChatMessage:
+    role: str
+    content: str
 
 
 def flatten_content_blocks(content: str | list[dict[str, Any]] | Any) -> str:

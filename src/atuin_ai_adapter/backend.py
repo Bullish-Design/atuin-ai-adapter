@@ -101,9 +101,7 @@ class BackendClient:
                     yield event
 
         except httpx.HTTPError as exc:
-            raise BackendConnectionError(
-                f"Cannot reach model server at {self._base_url}"
-            ) from exc
+            raise BackendConnectionError(f"Cannot reach model server at {self._base_url}") from exc
 
     async def _parse_stream(self, response: httpx.Response) -> AsyncIterator[BackendEvent]:
         """Parse an OpenAI-compatible SSE stream, yielding BackendEvents."""

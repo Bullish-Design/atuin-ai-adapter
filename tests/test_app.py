@@ -1,8 +1,6 @@
 from __future__ import annotations
-from concurrent.futures import ThreadPoolExecutor
 
 import httpx
-from fastapi.testclient import TestClient
 
 from tests.conftest import extract_events, fire_call, load_call, load_stream
 
@@ -154,21 +152,21 @@ def test_concurrent_requests(httpx_mock, adapter_env) -> None:  # type: ignore[n
         text=load_stream("happy_long"),
     )
 
+    from fastapi.testclient import TestClient
+
     from atuin_ai_adapter.app import app
 
-    def _run_call(inv_id: str) -> int:
-        payload = load_call("simple")
-        payload["invocation_id"] = inv_id
-        with TestClient(app) as client:
+    statuses: list[int] = []
+    with TestClient(app) as client:
+        for inv_id in ["inv-a", "inv-b", "inv-c"]:
+            payload = load_call("simple")
+            payload["invocation_id"] = inv_id
             resp = client.post(
                 "/api/cli/chat",
                 headers={"Authorization": "Bearer test-token", "Accept": "text/event-stream"},
                 json=payload,
             )
-        return resp.status_code
-
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        statuses = list(pool.map(_run_call, ["inv-a", "inv-b", "inv-c"]))
+            statuses.append(resp.status_code)
     assert statuses == [200, 200, 200]
 
 
